@@ -1,0 +1,24 @@
+const int LIGHT_PIN = A0;
+const int MOTION_PIN = 2;
+const int LED_PIN = 6;
+const int LIMIT = 500;
+
+void setup() {
+    pinMode(MOTION_PIN, INPUT);
+    pinMode(LED_PIN, OUTPUT);
+    Serial.begin(9600);
+}
+
+void loop() {
+    int light = analogRead(LIGHT_PIN);
+    bool moving = digitalRead(MOTION_PIN) == HIGH;
+    bool dark = light > LIMIT;
+    bool needLight = moving&&dark;
+    digitalWrite(LED_PIN, needLight);
+    Serial.print(light);
+    Serial.print("");
+    Serial.print(moving);
+    Serial.print("");
+    Serial.print(needLight);
+    delay(100);
+}

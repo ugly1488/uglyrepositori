@@ -1,0 +1,39 @@
+const int PIR_PIN = 2;
+const int LED_PIN = 9;
+const int BTN_PIN = 8;
+
+const unsigned long HOLD_TIME = 5000;
+const int LEVELS[] = {60, 150, 255};
+
+int levelIndex = 2;
+bool isLampOn = false;
+unsigned long lastMotionTime = 0;
+bool lastBtnState = HIGH;
+
+void setup() {
+  pinMode(PIR_PIN, INPUT);
+  pinMode(LED_PIN, OUTPUT);
+  pinMode(BTN_PIN, INPUT_PULLUP);
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  bool btnState = digitalRead(BTN_PIN);
+  if (lastBtnState == HIGH && btnState == LOW) {
+    levelIndex = (levelIndex + 1) % 3;
+    delay(50);
+  }
+  lastBtnState = btnState;
+
+  if (digitalRead(PIR_PIN) == HIGH) {
+    isLampOn = true;
+    lastMotionTime = now;
+  }
+
+  if (isLampOn && (now - lastMotionTime >= HOLD_TIME)) {
+    isLampOn = false;
+  }
+
+  analogWrite(LED_PIN, isLampOn ? LEVELS[levelIndex] : 0);
+}

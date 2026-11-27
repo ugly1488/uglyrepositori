@@ -1,0 +1,61 @@
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
+
+const int BUTTON_PIN = 4;
+
+const unsigned long READ_MS = 100;
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
+
+unsigned long buttonStartTime = 0;
+bool lastButtonState = false; 
+unsigned long lastRead = 0;
+
+void setup() {
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  Serial.begin(9600);
+
+  lcd.init();
+  lcd.backlight();
+  lcd.clear();
+}
+
+void readSensors() {
+  bool currentButtonState = (digitalRead(BUTTON_PIN) == LOW);
+  
+  if (currentButtonState && !lastButtonState) {
+    buttonStartTime = millis();
+    lcd.clear();
+  }
+  
+  if (currentButtonState) {
+    unsigned long currentDurationSec = (millis() - buttonStartTime) / 1000;
+    lcd.setCursor(0, 0);
+    lcd.print(currentDurationSec);
+    lcd.print(" sec        ");
+  }
+  
+  if (!currentButtonState && lastButtonState) {
+    unsigned long durationMs = millis() - buttonStartTime;
+    float durationSec = durationMs / 1000.0;
+    
+    Serial.print("Кнопка удерживалась: ");
+    Serial.print(durationSec);
+    Serial.println(" сек");
+    
+    lcd.setCursor(0, 0);
+    lcd.print(durationSec);
+    lcd.print(" sec        ");
+  }
+  
+  lastButtonState = currentButtonState;
+}
+
+void loop() {
+  unsigned long now = millis();
+  
+  if (now - lastRead >= READ_MS) {
+    lastRead = now;
+    readSensors();
+  }
+}

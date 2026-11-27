@@ -1,0 +1,39 @@
+const int BUTTON_PIN = 2;
+const int LED_PIN = 8;
+void setup() {
+    pinMode(BUTTON_PIN,INPUT_PULLUP);
+    pinMode(LED_PIN,OUTPUT);
+}
+
+void loop() {
+    int state = digitalRead(BUTTON_PIN);
+    if(state==LOW) {
+        digitalWrite(LED_PIN, HIGH);
+    } else {
+        digitalWrite(LED_PIN, LOW);
+    }
+}
+
+
+
+const int LEVEL = 128;
+const int LED_PIN = 9;
+void setup() {
+    pinMode(LED_PIN,OUTPUT);
+    analogWrite(LED_PIN, LEVEL);
+}
+
+void loop() {
+}
+
+void setup() {
+    Serial.begin(9600);
+    Serial.println("READY");
+}
+
+void loop() {
+    Serial.print("count");
+    Serial.println(count);
+    count = count + 1;
+    delay(1000);
+}

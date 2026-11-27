@@ -1,0 +1,80 @@
+const int LIGHT_PIN  = A0;
+const int MOTION_PIN = 2;
+const int BUTTON_PIN = 4;
+const int LED_PIN    = 8;
+
+const int DARK_ON    = 550;
+const int LIGHT_OFF  = 450;
+
+const unsigned long READ_MS   = 100;
+const unsigned long REPORT_MS = 1000;
+
+struct State { 
+  int light;
+  bool dark;
+  bool moving;
+  bool manual;
+  bool lamp;
+  unsigned long lastRead;
+  unsigned long lastReport;
+};
+
+State st; 
+
+void setup() {
+  pinMode(MOTION_PIN, INPUT);
+  pinMode(BUTTON_PIN, INPUT_PULLUP);
+  pinMode(LED_PIN, OUTPUT);
+  Serial.begin(9600);
+
+  st.light  = 0;
+  st.dark   = false;
+  st.moving = false;
+  st.manual = false;
+  st.lamp   = false;
+  st.lastRead   = 0;
+  st.lastReport = 0;
+}
+
+void readSensors() {
+  st.light  = analogRead(LIGHT_PIN);
+  st.moving = digitalRead(MOTION_PIN) == HIGH;
+  st.manual = digitalRead(BUTTON_PIN) == LOW;
+
+  if (st.light > DARK_ON)   st.dark = true;
+  if (st.light < LIGHT_OFF) st.dark = false;
+}
+
+void updateLamp() 
+{
+  st.lamp = st.manual || (st.dark && st.moving);
+  digitalWrite(LED_PIN, st.lamp);
+}
+
+void reportState() 
+{
+  Serial.print("light=");
+  Serial.print(st.light);
+  Serial.print(" motion=");
+  Serial.print(st.moving);
+  Serial.print(" manual=");
+  Serial.print(st.manual);
+  Serial.print(" lamp=");
+  Serial.println(st.lamp);
+}
+
+void loop() {
+  unsigned long now = millis();
+
+  if (now - st.lastRead >= READ_MS) {
+    st.lastRead = now;
+    readSensors();
+    updateLamp();
+  }
+
+  if (now - st.lastReport >= REPORT_MS) {
+    st.lastReport = now;
+    reportState();
+  }
+}
+

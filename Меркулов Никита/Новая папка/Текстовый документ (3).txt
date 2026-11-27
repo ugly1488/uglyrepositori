@@ -1,0 +1,83 @@
+const int PIN_LIGHT_SENSOR = A0;
+const int PIN_PIR_SENSOR   = 2;
+const int PIN_LED          = 9;
+
+const int LIGHT_THRESHOLD          = 500;
+const unsigned long HOLD_TIME_MS   = 5000;
+const unsigned long READ_PERIOD_MS = 100;
+const unsigned long LOG_PERIOD_MS  = 1000;
+
+struct SmartLampState {
+  int lightLevel;
+  bool motionDetected;
+  bool isLampActive;
+  int pwmBrightness;
+  unsigned long lastTriggerTime;
+};
+
+SmartLampState lamp = {0, false, false, 0, 0};
+unsigned long lastSensorReadTime = 0;
+unsigned long lastLogPrintTime   = 0;
+
+void setup() {
+  Serial.begin(9600);
+  pinMode(PIN_LIGHT_SENSOR, INPUT);
+  pinMode(PIN_PIR_SENSOR, INPUT);
+  pinMode(PIN_LED, OUTPUT);
+}
+
+void loop() {
+  unsigned long currentMillis = millis();
+
+  if (currentMillis - lastSensorReadTime >= READ_PERIOD_MS) {
+    lastSensorReadTime = currentMillis;
+    readSensors(lamp);
+  }
+
+  updateLightingLogic(lamp, currentMillis);
+  applyPwmBrightness(lamp);
+
+  if (currentMillis - lastLogPrintTime >= LOG_PERIOD_MS) {
+    lastLogPrintTime = currentMillis;
+    logStateToSerial(lamp);
+  }
+}
+
+void readSensors(SmartLampState &state) {
+  state.lightLevel = analogRead(PIN_LIGHT_SENSOR);
+  state.motionDetected = (digitalRead(PIN_PIR_SENSOR) == HIGH);
+}
+
+void updateLightingLogic(SmartLampState &state, unsigned long now) {
+  bool isDark = (state.lightLevel < LIGHT_THRESHOLD);
+
+  if (state.motionDetected && isDark) {
+    state.isLampActive = true;
+    state.lastTriggerTime = now;
+  }
+
+  if (state.isLampActive && (now - state.lastTriggerTime >= HOLD_TIME_MS)) {
+    state.isLampActive = false;
+  }
+}
+
+void applyPwmBrightness(SmartLampState &state) {
+  if (state.isLampActive) {
+    int brightness = map(state.lightLevel, 0, LIGHT_THRESHOLD, 255, 20);
+    state.pwmBrightness = constrain(brightness, 0, 255);
+  } else {
+    state.pwmBrightness = 0;
+  }
+  analogWrite(PIN_LED, state.pwmBrightness);
+}
+
+void logStateToSerial(const SmartLampState &state) {
+  Serial.print("Свет: ");
+  Serial.print(state.lightLevel);
+  Serial.print(" | Движение: ");
+  Serial.print(state.motionDetected ? "ДА" : "НЕТ");
+  Serial.print(" | Статус: ");
+  Serial.print(state.isLampActive ? "ВКЛ" : "ВЫКЛ");
+  Serial.print(" | Яркость (ШИМ): ");
+  Serial.println(state.pwmBrightness);
+}
