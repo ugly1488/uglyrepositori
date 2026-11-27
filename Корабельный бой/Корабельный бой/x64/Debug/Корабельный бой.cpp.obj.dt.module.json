@@ -1,0 +1,14 @@
+{
+    "version": 1,
+    "revision": 0,
+    "rules": [
+        {
+            "primary-output": "Корабельный бой\\x64\\Debug\\Корабельный бой.obj",
+            "outputs": [
+                "Корабельный бой\\x64\\Debug\\Корабельный бой.cpp.obj.dt.module.json",
+                "Корабельный бой\\x64\\Debug\\Корабельный бой.cpp.obj.dt.d.json"
+            ],
+            "requires": []
+        }
+    ]
+}
